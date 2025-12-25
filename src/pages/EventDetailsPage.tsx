@@ -384,9 +384,17 @@ export function EventDetailsPage() {
     const authed = await ensureAuthenticatedCustomer();
     if (!authed) return;
 
-    if (!customerEmail || !customerFirstName || !customerLastName) {
-      alert('Please fill in your name and email before checkout.');
-      return;
+    // If logged in and fields empty, auto-fill from profile
+    const profileRaw = localStorage.getItem('userProfile');
+    if (isAuthenticated && profileRaw) {
+      try {
+        const profile = JSON.parse(profileRaw);
+        if (!customerEmail) setCustomerEmail(profile.email || '');
+        if (!customerFirstName) setCustomerFirstName(profile.firstName || '');
+        if (!customerLastName) setCustomerLastName(profile.lastName || '');
+      } catch {
+        // ignore parse errors
+      }
     }
 
     setCheckoutLoading(true);
@@ -397,9 +405,9 @@ export function EventDetailsPage() {
         eventId: eventId,
         seatIds: Array.from(selected),
         customerInfo: {
-          email: customerEmail,
-          firstName: customerFirstName,
-          lastName: customerLastName,
+          email: customerEmail || localStorage.getItem('userProfile') ? JSON.parse(localStorage.getItem('userProfile') || '{}').email : '',
+          firstName: customerFirstName || JSON.parse(localStorage.getItem('userProfile') || '{}').firstName || '',
+          lastName: customerLastName || JSON.parse(localStorage.getItem('userProfile') || '{}').lastName || '',
         },
         sessionId,
       });
